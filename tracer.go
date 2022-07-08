@@ -2,6 +2,8 @@ package utils
 
 import (
 	"context"
+	"reflect"
+	"runtime"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -22,6 +24,7 @@ type ITracer interface {
 	AddSpanEvents(span trace.Span, name string, events map[string]string)
 	AddSpanError(span trace.Span, err error)
 	FailSpan(span trace.Span, msg string)
+	GetFunctionName(i interface{}) string
 }
 
 type TracerConfig struct {
@@ -123,4 +126,8 @@ func (t TracerConfig) FailSpan(span trace.Span, msg string) {
 func (t TracerConfig) AddSpanErrorAndFail(span trace.Span, err error, msg string) {
 	span.RecordError(err)
 	span.SetStatus(codes.Error, msg)
+}
+
+func (t TracerConfig) GetFunctionName(i interface{}) string {
+	return runtime.FuncForPC(reflect.ValueOf(i).Pointer()).Name()
 }
