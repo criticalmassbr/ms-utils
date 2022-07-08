@@ -1,4 +1,4 @@
-module ms-utils
+module github.com/criticalmassbr/ms-utils
 
 go 1.18
 
