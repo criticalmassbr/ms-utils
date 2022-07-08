@@ -16,7 +16,7 @@ import (
 
 type ITracer interface {
 	SetGlobalTracer(serviceName string, exportAddress string, exportPort string) error
-	NewSpan(ctx context.Context, tracerName string, spanName string) (context.Context, trace.Span)
+	NewSpan(ctx context.Context, tracerName string, spanName string, opts ...trace.SpanStartOption) (context.Context, trace.Span)
 	SpanFromContext(ctx context.Context) trace.Span
 	AddSpanTags(span trace.Span, tags map[string]string)
 	AddSpanEvents(span trace.Span, name string, events map[string]string)
@@ -56,8 +56,12 @@ func (t TracerConfig) SetGlobalTracer(c *TracerConfig) error {
 
 // NewSpan returns a new span from the global tracer. Each resulting
 // span must be completed with `defer span.End()` right after the call.
-func (t TracerConfig) NewSpan(ctx context.Context, tracerName string, spanName string) (context.Context, trace.Span) {
-	return otel.Tracer(tracerName).Start(ctx, spanName)
+func (t TracerConfig) NewSpan(ctx context.Context, tracerName string, spanName string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
+	if opts == nil {
+		return otel.Tracer(tracerName).Start(ctx, spanName)
+	}
+
+	return otel.Tracer(tracerName).Start(ctx, spanName, opts...)
 }
 
 // SpanFromContext returns the current span from a context. If you wish to avoid
