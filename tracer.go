@@ -117,3 +117,10 @@ func (t TracerConfig) AddSpanError(span trace.Span, err error) {
 func (t TracerConfig) FailSpan(span trace.Span, msg string) {
 	span.SetStatus(codes.Error, msg)
 }
+
+// AddSpanErrorAndFail adds a new event to the span. It will appear under the "Logs"
+// section of the selected span. This is going to flag the span as "failed".
+func (t TracerConfig) AddSpanErrorAndFail(span trace.Span, err error, msg string) {
+	span.RecordError(err)
+	span.SetStatus(codes.Error, msg)
+}
