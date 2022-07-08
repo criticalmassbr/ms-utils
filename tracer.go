@@ -128,6 +128,18 @@ func (t TracerConfig) AddSpanErrorAndFail(span trace.Span, err error, msg string
 	span.SetStatus(codes.Error, msg)
 }
 
+// GetFunctionName returns the name of the function that is calling this function.
+// If a function is passed as an argument, it will return the name of the function.
 func (t TracerConfig) GetFunctionName(i interface{}) string {
-	return runtime.FuncForPC(reflect.ValueOf(i).Pointer()).Name()
+	if i != nil {
+		return runtime.FuncForPC(reflect.ValueOf(i).Pointer()).Name()
+	}
+
+	pc, _, _, ok := runtime.Caller(1)
+	details := runtime.FuncForPC(pc)
+	if ok && details != nil {
+		return details.Name()
+	}
+
+	return "unknown"
 }
