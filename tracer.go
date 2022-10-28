@@ -2,8 +2,10 @@ package utils
 
 import (
 	"context"
+	"log"
 	"reflect"
 	"runtime"
+	"time"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -28,6 +30,7 @@ type ITracer interface {
 }
 
 type TracerConfig struct {
+	tp             *tracesdk.TracerProvider
 	ServiceName    string
 	ExportEndpoint string
 }
@@ -43,7 +46,7 @@ func (t TracerConfig) SetGlobalTracer(c *TracerConfig) error {
 		return err
 	}
 
-	tp := tracesdk.NewTracerProvider(
+	t.tp = tracesdk.NewTracerProvider(
 		tracesdk.WithBatcher(exporter),
 		tracesdk.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
@@ -51,10 +54,22 @@ func (t TracerConfig) SetGlobalTracer(c *TracerConfig) error {
 		)),
 	)
 
-	otel.SetTracerProvider(tp)
+	otel.SetTracerProvider(t.tp)
 	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}))
 
 	return nil
+}
+
+func (t TracerConfig) Stop(ctx context.Context) {
+	if t.tp != nil {
+		// Do not make the application hang when it is shutdown.
+		ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+		defer cancel()
+
+		if err := t.tp.Shutdown(ctx); err != nil {
+			log.Fatal(err)
+		}
+	}
 }
 
 // NewSpan returns a new span from the global tracer. Each resulting
