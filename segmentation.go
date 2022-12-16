@@ -8,6 +8,11 @@ import (
 type Filter struct {
 	Relation   Relation    `json:"relation"`
 	Conditions []Condition `json:"conditions"`
+	Exclude    Excludable  `json:"exclude"`
+}
+
+type Excludable struct {
+	Users []int `json:"users"`
 }
 
 type FieldFilter struct {
