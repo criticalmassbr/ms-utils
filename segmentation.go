@@ -2,6 +2,7 @@ package utils
 
 import (
 	"encoding/json"
+	"errors"
 	"time"
 )
 
@@ -38,22 +39,37 @@ func (c *Condition) UnmarshalJSON(data []byte) error {
 	}
 	switch v := c.Value.(type) {
 	case []interface{}:
+		if len(v) == 0 {
+			return errors.New("value is required")
+		}
 		switch v[0].(type) {
 		case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
 			c.Value = castToIntSlice(v)
 		case map[string]interface{}:
-			c.Value = castToRFCDateTuple(v)
+			d, err := castToRFCDateTuple(v)
+			if err != nil {
+				return err
+			}
+			c.Value = d
 		case string:
 			c.Value = castToStringSlice(v)
+		default:
+			return errors.New("value is invalid")
 		}
 	case interface{}:
 		switch v := v.(type) {
 		case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
 			c.Value = castToint(v)
 		case map[string]interface{}:
-			c.Value = castToRFCDate(v)
+			d, err := castToRFCDate(v)
+			if err != nil {
+				return err
+			}
+			c.Value = d
 		case string:
 			c.Value = string(v)
+		default:
+			return errors.New("value is invalid")
 		}
 	}
 	return nil
@@ -70,15 +86,19 @@ func castToIntSlice(v []interface{}) []int {
 	return result
 }
 
-func castToRFCDateTuple(v []interface{}) [2]RFCDate {
+func castToRFCDateTuple(v []interface{}) ([2]RFCDate, error) {
 	var result [2]RFCDate
 	for i, vv := range v {
 		switch v := vv.(type) {
 		case map[string]interface{}:
-			result[i] = castToRFCDate(v)
+			d, err := castToRFCDate(v)
+			if err != nil {
+				return result, err
+			}
+			result[i] = d
 		}
 	}
-	return result
+	return result, nil
 }
 
 func castToStringSlice(v []interface{}) []string {
@@ -122,17 +142,31 @@ func castToint(v interface{}) int {
 	return 0
 }
 
-func castToRFCDate(v map[string]interface{}) RFCDate {
+func castToRFCDate(v map[string]interface{}) (RFCDate, error) {
 	var r RFCDate
-	if d, ok := v["date"]; ok {
-		r.Date, _ = time.Parse(time.RFC3339, d.(string))
+
+	date, ok := v["date"].(string)
+	if !ok {
+		return RFCDate{}, errors.New("date is required")
 	}
-	if f, ok := v["format"]; ok {
-		for _, ff := range f.([]interface{}) {
-			r.Format = append(r.Format, RFCDateFormat(ff.(string)))
+	format, ok := v["format"].([]interface{})
+	if !ok {
+		return RFCDate{}, errors.New("format is required")
+	}
+
+	d, err := time.Parse(time.RFC3339, date)
+	if err != nil {
+		return RFCDate{}, err
+	}
+	r.Date = d
+	for _, f := range format {
+		f, ok := f.(string)
+		if !ok {
+			return RFCDate{}, errors.New("format must be string")
 		}
+		r.Format = append(r.Format, RFCDateFormat(f))
 	}
-	return r
+	return r, nil
 }
 
 type FieldName string
@@ -187,6 +221,7 @@ type Operator string
 
 const (
 	OperatorEq      Operator = "eq"
+	OperatorNotEq   Operator = "ne"
 	OperatorIn      Operator = "in"
 	OperatorNotIn   Operator = "notIn"
 	OperatorBetween Operator = "between"
@@ -223,7 +258,7 @@ var (
 			Fields: []FieldName{FieldNameDepartmentId, FieldNameJobId, FieldNameCompanySite, FieldNameHierarchy},
 			ValidOperators: []ValidateOperator{
 				{
-					Operators:           []Operator{OperatorEq, OperatorIn, OperatorNotIn},
+					Operators:           []Operator{OperatorEq, OperatorNotEq, OperatorIn, OperatorNotIn},
 					ValueTypeValidators: []func(interface{}) bool{isInt, isIntSlice},
 				},
 			},
@@ -232,7 +267,7 @@ var (
 			Fields: []FieldName{FieldNameName, FieldNameEmail, FieldNamePhone},
 			ValidOperators: []ValidateOperator{
 				{
-					Operators:           []Operator{OperatorEq},
+					Operators:           []Operator{OperatorEq, OperatorNotEq},
 					ValueTypeValidators: []func(interface{}) bool{isString},
 				},
 			},
