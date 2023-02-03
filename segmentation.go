@@ -264,11 +264,20 @@ var (
 			},
 		},
 		{
-			Fields: []FieldName{FieldNameName, FieldNameEmail, FieldNamePhone},
+			Fields: []FieldName{FieldNameName, FieldNamePhone},
 			ValidOperators: []ValidateOperator{
 				{
 					Operators:           []Operator{OperatorEq, OperatorNotEq},
 					ValueTypeValidators: []func(interface{}) bool{isString},
+				},
+			},
+		},
+		{
+			Fields: []FieldName{FieldNameEmail},
+			ValidOperators: []ValidateOperator{
+				{
+					Operators:           []Operator{OperatorEq, OperatorNotEq, OperatorIn, OperatorNotIn},
+					ValueTypeValidators: []func(interface{}) bool{isString, isStringSlice},
 				},
 			},
 		},
@@ -377,6 +386,11 @@ func isInt(t interface{}) bool {
 
 func isIntSlice(t interface{}) bool {
 	_, ok := t.([]int)
+	return ok
+}
+
+func isStringSlice(t interface{}) bool {
+	_, ok := t.([]string)
 	return ok
 }
 
