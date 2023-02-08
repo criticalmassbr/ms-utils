@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Filter struct {
@@ -24,7 +26,7 @@ type FieldFilter struct {
 type Condition struct {
 	FieldName FieldName   `json:"fieldName"`
 	Operator  Operator    `json:"operator"`
-	Value     interface{} `json:"value"` // RFCDate | [2]RFCDate | int | []int | string
+	Value     interface{} `json:"value"` // RFCDate | [2]RFCDate | int | []int | string | []string | uuid.UUID | []uuid.UUID
 }
 
 func (c *Condition) UnmarshalJSON(data []byte) error {
@@ -52,7 +54,11 @@ func (c *Condition) UnmarshalJSON(data []byte) error {
 			}
 			c.Value = d
 		case string:
-			c.Value = castToStringSlice(v)
+			if ids, err := castToUUIDSlice(c.Value); err == nil {
+				c.Value = ids
+			} else {
+				c.Value = castToStringSlice(v)
+			}
 		default:
 			return errors.New("value is invalid")
 		}
@@ -67,7 +73,11 @@ func (c *Condition) UnmarshalJSON(data []byte) error {
 			}
 			c.Value = d
 		case string:
-			c.Value = string(v)
+			if id, err := castToUUID(c.Value); err == nil {
+				c.Value = id
+			} else {
+				c.Value = string(v)
+			}
 		default:
 			return errors.New("value is invalid")
 		}
@@ -110,6 +120,36 @@ func castToStringSlice(v []interface{}) []string {
 		}
 	}
 	return result
+}
+
+func castToUUID(v interface{}) (uuid.UUID, error) {
+	switch v := (v).(type) {
+	case string:
+		u, err := uuid.Parse(v)
+		if err != nil {
+			return uuid.Nil, err
+		}
+		return u, nil
+	}
+	return uuid.Nil, nil
+}
+
+func castToUUIDSlice(v interface{}) ([]uuid.UUID, error) {
+	var result []uuid.UUID
+	switch v := v.(type) {
+	case []interface{}:
+		for _, vv := range v {
+			switch v := vv.(type) {
+			case string:
+				u, err := uuid.Parse(v)
+				if err != nil {
+					return nil, err
+				}
+				result = append(result, u)
+			}
+		}
+	}
+	return result, nil
 }
 
 func castToint(v interface{}) int {
@@ -240,7 +280,7 @@ type ValidateOperator struct {
 }
 
 var (
-	ValidConditions = []ValidateCondition{
+	ValidConditionsV1 = []ValidateCondition{
 		{
 			Fields: []FieldName{FieldNameCreatedAt, FieldNameUpdatedAt, FieldNameBirthday, FieldNameHireDate},
 			ValidOperators: []ValidateOperator{
@@ -282,10 +322,52 @@ var (
 			},
 		},
 	}
+	ValidConditionsBurst = []ValidateCondition{
+		{
+			Fields: []FieldName{FieldNameCreatedAt, FieldNameUpdatedAt, FieldNameBirthday, FieldNameHireDate},
+			ValidOperators: []ValidateOperator{
+				{
+					Operators:           []Operator{OperatorBetween},
+					ValueTypeValidators: []func(interface{}) bool{isRFCDateTuple},
+				},
+				{
+					Operators:           []Operator{OperatorEq, OperatorGt, OperatorLt},
+					ValueTypeValidators: []func(interface{}) bool{isRFCDate},
+				},
+			},
+		},
+		{
+			Fields: []FieldName{FieldNameDepartmentId, FieldNameJobId, FieldNameCompanySite, FieldNameHierarchy},
+			ValidOperators: []ValidateOperator{
+				{
+					Operators:           []Operator{OperatorEq, OperatorNotEq, OperatorIn, OperatorNotIn},
+					ValueTypeValidators: []func(interface{}) bool{isUUID, isUUIDSlice},
+				},
+			},
+		},
+		{
+			Fields: []FieldName{FieldNameName, FieldNamePhone},
+			ValidOperators: []ValidateOperator{
+				{
+					Operators:           []Operator{OperatorEq, OperatorNotEq},
+					ValueTypeValidators: []func(interface{}) bool{isString},
+				},
+			},
+		},
+		{
+			Fields: []FieldName{FieldNameEmail},
+			ValidOperators: []ValidateOperator{
+				{
+					Operators:           []Operator{OperatorEq, OperatorNotEq, OperatorIn, OperatorNotIn},
+					ValueTypeValidators: []func(interface{}) bool{isString, isStringSlice},
+				},
+			},
+		},
+	}
 )
 
-func (filter *Filter) Validate() bool {
-	return isEveryFilterConditionValid(filter, ValidConditions)
+func (filter *Filter) Validate(validConditions []ValidateCondition) bool {
+	return isEveryFilterConditionValid(filter, validConditions)
 }
 
 func isEveryFilterConditionValid(filter *Filter, validConditions []ValidateCondition) bool {
@@ -396,5 +478,15 @@ func isStringSlice(t interface{}) bool {
 
 func isString(t interface{}) bool {
 	_, ok := t.(string)
+	return ok
+}
+
+func isUUID(t interface{}) bool {
+	_, ok := t.(uuid.UUID)
+	return ok
+}
+
+func isUUIDSlice(t interface{}) bool {
+	_, ok := t.([]uuid.UUID)
 	return ok
 }
