@@ -8,19 +8,25 @@ import (
 	"github.com/google/uuid"
 )
 
-type Filter struct {
+type Filter[T Excludable] struct {
 	Relation   Relation    `json:"relation"`
 	Conditions []Condition `json:"conditions"`
-	Exclude    Excludable  `json:"exclude"`
+	Exclude    T           `json:"exclude"`
 }
 
-type Excludable struct {
+type Excludable interface{ ExcludableV1 | ExcludableBurst }
+
+type ExcludableV1 struct {
 	Users []int `json:"users"`
 }
 
-type FieldFilter struct {
+type ExcludableBurst struct {
+	Users []uuid.UUID `json:"users"`
+}
+
+type FieldFilter[T Excludable] struct {
 	FieldName FieldCount `json:"fieldName"`
-	Filter    Filter     `json:"filter"`
+	Filter    Filter[T]  `json:"filter"`
 }
 
 type Condition struct {
@@ -366,11 +372,11 @@ var (
 	}
 )
 
-func (filter *Filter) Validate(validConditions []ValidateCondition) bool {
+func (filter *Filter[T]) Validate(validConditions []ValidateCondition) bool {
 	return isEveryFilterConditionValid(filter, validConditions)
 }
 
-func isEveryFilterConditionValid(filter *Filter, validConditions []ValidateCondition) bool {
+func isEveryFilterConditionValid[T Excludable](filter *Filter[T], validConditions []ValidateCondition) bool {
 	for _, condition := range filter.Conditions {
 		if !isConditionValid(condition, validConditions) {
 			return false
