@@ -3,7 +3,6 @@ module github.com/criticalmassbr/ms-utils
 go 1.18
 
 require (
-	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-sql-driver/mysql v1.7.0
 	github.com/lib/pq v1.10.7
 	github.com/streadway/amqp v1.0.0
@@ -14,14 +13,17 @@ require (
 )
 
 require (
-	github.com/cespare/xxhash/v2 v2.1.2 // indirect
-	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 require (
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/google/uuid v1.3.0
-	golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10 // indirect
+	github.com/stretchr/testify v1.8.1
+	golang.org/x/exp v0.0.0-20230223210539-50820d90acfd
+	golang.org/x/sys v0.1.0 // indirect
 )
