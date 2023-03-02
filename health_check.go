@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-redis/redis"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	"github.com/streadway/amqp"
@@ -22,9 +23,14 @@ type HealthCheckRabbitMQConfig struct {
 	Url string
 }
 
+type HealthCheckRedisConfig struct {
+	Url string
+}
+
 type HealthCheckConfig struct {
 	HealthCheckDBConfig       []HealthCheckDBConfig
 	HealthCheckRabbitMQConfig *HealthCheckRabbitMQConfig
+	HealthCheckRedisConfig    *HealthCheckRedisConfig
 }
 
 var HealthCheck = HealthCheckConfig{}
@@ -61,6 +67,16 @@ func (h HealthCheckConfig) StartServer(port string) (func(), error) {
 						fmt.Printf("[UTILS][WEBSERVER] DB server is down: %s\n", dbConfig.Type)
 						return
 					}
+				}
+			}
+
+			if HealthCheck.HealthCheckRedisConfig != nil {
+				redisErr := redisHealthCheck(HealthCheck.HealthCheckRedisConfig.Url)
+				if redisErr != nil {
+					w.WriteHeader(http.StatusServiceUnavailable)
+					w.Write([]byte("FAIL"))
+					fmt.Printf("[UTILS][WEBSERVER] Redis server is down")
+					return
 				}
 			}
 
@@ -110,6 +126,20 @@ func dbHealthCheck(dbType string, url string) error {
 	defer db.Close()
 
 	err = db.Ping()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func redisHealthCheck(url string) error {
+	client := redis.NewClient(&redis.Options{
+		Addr: url,
+	})
+	defer client.Close()
+
+	_, err := client.Ping().Result()
 	if err != nil {
 		return err
 	}
