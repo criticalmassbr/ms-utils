@@ -457,3 +457,79 @@ func TestSortAndRemoveDuplicateConditions(t *testing.T) {
 		})
 	}
 }
+
+func TestRemove(t *testing.T) {
+	type args struct {
+		slice   []int
+		element int
+	}
+	tests := []struct {
+		name string
+		args args
+		want []int
+	}{
+		{
+			name: "remove element from ordered slice",
+			args: args{
+				slice:   []int{1, 2, 3, 4, 5},
+				element: 3,
+			},
+			want: []int{1, 2, 4, 5},
+		},
+		{
+			name: "remove element from unordered slice",
+			args: args{
+				slice:   []int{5, 1, 3, 2, 4},
+				element: 1,
+			},
+			want: []int{5, 3, 2, 4},
+		},
+		{
+			name: "remove element from slice with only one element",
+			args: args{
+				slice:   []int{1},
+				element: 1,
+			},
+			want: []int{},
+		},
+		{
+			name: "remove element from empty slice",
+			args: args{
+				slice:   []int{},
+				element: 1,
+			},
+			want: []int{},
+		},
+		{
+			name: "remove element from slice with duplicated elements",
+			args: args{
+				slice:   []int{1, 1, 1, 1, 1},
+				element: 1,
+			},
+			want: []int{1, 1, 1, 1},
+		},
+		{
+			name: "remove element from slice with duplicated elements and other elements",
+			args: args{
+				slice:   []int{2, 1, 3, 1, 5, 4, 1, 10, 1, 9, 1},
+				element: 1,
+			},
+			want: []int{2, 3, 1, 5, 4, 1, 10, 1, 9, 1},
+		},
+		{
+			name: "remove nothing from slice with element not in slice",
+			args: args{
+				slice:   []int{1, 2, 3, 4, 5},
+				element: 6,
+			},
+			want: []int{1, 2, 3, 4, 5},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := utils.RemoveFirstOcurrence(tt.args.slice, tt.args.element)
+			assert.True(t, reflect.DeepEqual(tt.want, got), "got %v, want %v", got, tt.want)
+		})
+	}
+}

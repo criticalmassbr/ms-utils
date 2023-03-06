@@ -30,6 +30,15 @@ func Contains[T comparable](original []T, expected T) bool {
 	return false
 }
 
+func RemoveFirstOcurrence[T comparable](original []T, element T) []T {
+	for i, e := range original {
+		if e == element {
+			return append(original[:i], original[i+1:]...)
+		}
+	}
+	return original
+}
+
 func RemoveDuplicatesFromOrderedSlice[T constraints.Ordered](a []T) []T {
 	if len(a) == 0 {
 		return a
