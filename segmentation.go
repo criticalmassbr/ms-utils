@@ -240,6 +240,8 @@ const (
 	FieldCountJob         FieldCount = "job"
 	FieldCountCompanySite FieldCount = "companySite"
 	FieldCountHierarchy   FieldCount = "hierarchy"
+	FieldCountCity        FieldCount = "city"
+	FieldCountState       FieldCount = "state"
 )
 
 type RFCDate struct {
