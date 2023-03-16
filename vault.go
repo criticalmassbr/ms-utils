@@ -20,24 +20,22 @@ type VaultConfig struct {
 	Cert      string
 }
 
-type vaultService struct {
+type VaultService struct {
 	config *VaultConfig
 	client *api.Client
 }
 
 type VaultSecretKey string
 
-var Vault = vaultService{}
-
-func (v *vaultService) NewVaultService(cfg *VaultConfig) vaultService {
-	service := vaultService{
+func (v *VaultService) NewVaultService(cfg *VaultConfig) VaultService {
+	service := VaultService{
 		config: cfg,
 	}
 	service.init()
 	return service
 }
 
-func (s *vaultService) init() error {
+func (s *VaultService) init() error {
 	certs := x509.NewCertPool()
 
 	pemData, err := os.ReadFile(s.config.Cert)
@@ -71,7 +69,7 @@ func (s *vaultService) init() error {
 	return nil
 }
 
-func (s *vaultService) login() (*api.Secret, error) {
+func (s *VaultService) login() (*api.Secret, error) {
 	appRoleAuth, err := s.newAppRoleAuth()
 	if err != nil {
 		return nil, err
@@ -88,7 +86,7 @@ func (s *vaultService) login() (*api.Secret, error) {
 	return authInfo, nil
 }
 
-func (s *vaultService) newAppRoleAuth() (*auth.AppRoleAuth, error) {
+func (s *VaultService) newAppRoleAuth() (*auth.AppRoleAuth, error) {
 	secretID := &auth.SecretID{FromString: s.config.SecretId}
 	appRoleAuth, err := auth.NewAppRoleAuth(
 		s.config.RoleId,
@@ -100,7 +98,7 @@ func (s *vaultService) newAppRoleAuth() (*auth.AppRoleAuth, error) {
 	return appRoleAuth, nil
 }
 
-func (s *vaultService) renewToken() {
+func (s *VaultService) renewToken() {
 	for {
 		_, span := Tracer.NewSpan(context.Background(), "vault", "Vault Token Renewal")
 
@@ -117,7 +115,7 @@ func (s *vaultService) renewToken() {
 	}
 }
 
-func (s *vaultService) manageTokenLifecycle(token *api.Secret) error {
+func (s *VaultService) manageTokenLifecycle(token *api.Secret) error {
 	if !token.Auth.Renewable {
 		_, span := Tracer.NewSpan(context.Background(), "vault", "Vault Token Renewal")
 		Tracer.AddSpanEvents(span, "Token not renewable", map[string]string{"message": "Token is not configured to be renewable. Re-attempting login."})
@@ -157,7 +155,7 @@ func (s *vaultService) manageTokenLifecycle(token *api.Secret) error {
 	}
 }
 
-func (s *vaultService) GetSecret(key VaultSecretKey, clientSlug string) (string, error) {
+func (s *VaultService) GetSecret(key VaultSecretKey, clientSlug string) (string, error) {
 	secret, err := s.client.KVv1(s.config.MountPath).Get(context.Background(), clientSlug)
 	if err != nil {
 		return "", fmt.Errorf("unable to read secret: %v", err)
