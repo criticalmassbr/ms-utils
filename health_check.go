@@ -200,7 +200,7 @@ func vaultHealthCheck(config *HealthCheckVaultConfig) error {
 		return err
 	}
 
-	if !resp.Initialized || resp.Sealed || !resp.Standby {
+	if !resp.Initialized || resp.Sealed {
 		return fmt.Errorf("vault is not healthy: %v", resp)
 	}
 
