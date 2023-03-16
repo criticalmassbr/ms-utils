@@ -170,3 +170,24 @@ func (s *VaultService) GetSecret(key VaultSecretKey, clientSlug string) (string,
 
 	return value, nil
 }
+
+func (s *VaultService) GetSecrets(clientSlug string, keys []string) (map[string]interface{}, error) {
+	secrets, err := s.client.KVv1(s.config.MountPath).Get(context.Background(), clientSlug)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read secret: %v", err)
+	}
+
+	values, ok := secrets.Data["data"].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("secret value type assertion failed")
+	}
+
+	filteredSecrets := make(map[string]interface{})
+	for _, key := range keys {
+		if val, ok := values[key]; ok {
+			filteredSecrets[key] = val
+		}
+	}
+
+	return filteredSecrets, nil
+}
