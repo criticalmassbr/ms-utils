@@ -6,7 +6,6 @@ import (
 	"crypto/x509"
 	"database/sql"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"sync"
@@ -174,7 +173,7 @@ func vaultHealthCheck(config *HealthCheckVaultConfig) error {
 
 	pemData, err := os.ReadFile(config.Cert)
 	if err != nil {
-		log.Fatalf("unable to read Vault certificate: %v", err)
+		return fmt.Errorf("unable to read Vault certificate: %v", err)
 	}
 	certs.AppendCertsFromPEM(pemData)
 
