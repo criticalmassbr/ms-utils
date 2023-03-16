@@ -27,6 +27,8 @@ type VaultService struct {
 
 type VaultSecretKey string
 
+var Vault = VaultService{}
+
 func (v *VaultService) NewVaultService(cfg *VaultConfig) VaultService {
 	service := VaultService{
 		config: cfg,
