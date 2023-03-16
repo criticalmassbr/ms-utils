@@ -2,9 +2,13 @@ package utils
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
@@ -29,8 +33,8 @@ type HealthCheckRedisConfig struct {
 }
 
 type HealthCheckVaultConfig struct {
-	Address    string
-	HttpClient http.Client
+	Url  string
+	Cert string
 }
 
 type HealthCheckConfig struct {
@@ -165,10 +169,27 @@ func redisHealthCheck(url string) error {
 }
 
 func vaultHealthCheck(config *HealthCheckVaultConfig) error {
-	client, err := api.NewClient(&api.Config{
-		Address:    config.Address,
-		HttpClient: &config.HttpClient,
-	})
+
+	certs := x509.NewCertPool()
+
+	pemData, err := os.ReadFile(config.Cert)
+	if err != nil {
+		log.Fatalf("unable to read Vault certificate: %v", err)
+	}
+	certs.AppendCertsFromPEM(pemData)
+
+	vaultConfig := &api.Config{
+		Address: config.Url,
+		HttpClient: &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					RootCAs: certs,
+				},
+			},
+		},
+	}
+
+	client, err := api.NewClient(vaultConfig)
 	if err != nil {
 		return err
 	}
