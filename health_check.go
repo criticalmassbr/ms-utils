@@ -2,14 +2,18 @@ package utils
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"database/sql"
 	"fmt"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
 	"github.com/go-redis/redis"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/hashicorp/vault/api"
 	_ "github.com/lib/pq"
 	"github.com/streadway/amqp"
 )
@@ -27,10 +31,16 @@ type HealthCheckRedisConfig struct {
 	Url string
 }
 
+type HealthCheckVaultConfig struct {
+	Url  string
+	Cert string
+}
+
 type HealthCheckConfig struct {
 	HealthCheckDBConfig       []HealthCheckDBConfig
 	HealthCheckRabbitMQConfig *HealthCheckRabbitMQConfig
 	HealthCheckRedisConfig    *HealthCheckRedisConfig
+	HealthCheckVaultConfig    *HealthCheckVaultConfig
 }
 
 var HealthCheck = HealthCheckConfig{}
@@ -76,6 +86,16 @@ func (h HealthCheckConfig) StartServer(port string) (func(), error) {
 					w.WriteHeader(http.StatusServiceUnavailable)
 					w.Write([]byte("FAIL"))
 					fmt.Printf("[UTILS][WEBSERVER] Redis server is down")
+					return
+				}
+			}
+
+			if HealthCheck.HealthCheckVaultConfig != nil {
+				vaultErr := vaultHealthCheck(HealthCheck.HealthCheckVaultConfig)
+				if vaultErr != nil {
+					w.WriteHeader(http.StatusServiceUnavailable)
+					w.Write([]byte("FAIL"))
+					fmt.Printf("[UTILS][WEBSERVER] Vault server is down")
 					return
 				}
 			}
@@ -142,6 +162,45 @@ func redisHealthCheck(url string) error {
 	_, err := client.Ping().Result()
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func vaultHealthCheck(config *HealthCheckVaultConfig) error {
+
+	certs := x509.NewCertPool()
+
+	pemData, err := os.ReadFile(config.Cert)
+	if err != nil {
+		return fmt.Errorf("unable to read Vault certificate: %v", err)
+	}
+	certs.AppendCertsFromPEM(pemData)
+
+	vaultConfig := &api.Config{
+		Address: config.Url,
+		HttpClient: &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					RootCAs: certs,
+				},
+			},
+		},
+	}
+
+	client, err := api.NewClient(vaultConfig)
+	if err != nil {
+		return err
+	}
+
+	// Make a request to the health endpoint of Vault
+	resp, err := client.Sys().Health()
+	if err != nil {
+		return err
+	}
+
+	if !resp.Initialized || resp.Sealed {
+		return fmt.Errorf("vault is not healthy: %v", resp)
 	}
 
 	return nil
