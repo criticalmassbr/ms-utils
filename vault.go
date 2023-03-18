@@ -20,6 +20,12 @@ type VaultConfig struct {
 	Cert      string
 }
 
+type IVaultService interface {
+	NewVaultService(cfg *VaultConfig) IVaultService
+	GetSecret(key VaultSecretKey, clientSlug string) (string, error)
+	GetSecrets(clientSlug string, keys []string) (map[string]interface{}, error)
+}
+
 type VaultService struct {
 	config *VaultConfig
 	client *api.Client
@@ -29,8 +35,8 @@ type VaultSecretKey string
 
 var Vault = VaultService{}
 
-func (v *VaultService) NewVaultService(cfg *VaultConfig) VaultService {
-	service := VaultService{
+func (v *VaultService) NewVaultService(cfg *VaultConfig) IVaultService {
+	service := &VaultService{
 		config: cfg,
 	}
 	service.init()
