@@ -48,6 +48,10 @@ func (s *VaultMockService) GetSecrets(clientSlug string, keys []string) (map[str
 	return filteredSecrets, nil
 }
 
-func SetMockData(vaultMock VaultMockService, data *map[string]string) {
-	vaultMock.mockData = data
+func SetVaultMockData(data *map[string]string) IVaultService {
+	VaultMock = VaultMockService{
+		mockData: data,
+	}
+
+	return &VaultMock
 }
