@@ -4,19 +4,9 @@ import (
 	"fmt"
 )
 
-type VaultMockConfig struct {
-	RoleId    string
-	SecretId  string
-	Url       string
-	MountPath string
-	Cert      string
-}
-
 type VaultMockService struct {
-	config *VaultMockConfig
+	config *VaultConfig
 }
-
-type VaultMockSecretKey string
 
 var VaultMock = VaultMockService{}
 
@@ -25,16 +15,16 @@ var VaultMockData = map[string]string{
 	"DATABASE_NAME": "dial_somosdialog_dev",
 	"DATABASE_USER": "root",
 	"DATABASE_PASS": "",
-}
+} 
 
-func (v *VaultMockService) NewVaultService(cfg *VaultMockConfig) VaultMockService {
-	service := VaultMockService{
+func (v *VaultMockService) NewVaultService(cfg *VaultConfig) IVaultService {
+	service := &VaultMockService{
 		config: cfg,
 	}
 	return service
 }
 
-func (s *VaultMockService) GetSecret(key VaultMockSecretKey, clientSlug string) (string, error) {
+func (s *VaultMockService) GetSecret(key VaultSecretKey, clientSlug string) (string, error) {
 
 	value, ok := VaultMockData[string(key)]
 	if !ok {
