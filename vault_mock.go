@@ -9,6 +9,15 @@ type VaultMockService struct {
 	mockData *map[string]string
 }
 
+var VaultMock = VaultMockService{
+	mockData: &map[string]string{
+		"DATABASE_HOST": "localhost",
+		"DATABASE_NAME": "dial_somosdialog_dev",
+		"DATABASE_USER": "root",
+		"DATABASE_PASS": "",
+	},
+}
+
 func (v *VaultMockService) NewVaultService(cfg *VaultConfig) IVaultService {
 	service := &VaultMockService{
 		config: cfg,
