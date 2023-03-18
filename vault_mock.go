@@ -5,17 +5,18 @@ import (
 )
 
 type VaultMockService struct {
-	config *VaultConfig
+	config   *VaultConfig
+	mockData *map[string]string
 }
 
-var VaultMock = VaultMockService{}
-
-var VaultMockData = map[string]string{
-	"DATABASE_HOST": "localhost",
-	"DATABASE_NAME": "dial_somosdialog_dev",
-	"DATABASE_USER": "root",
-	"DATABASE_PASS": "",
-} 
+var VaultMock = VaultMockService{
+	mockData: &map[string]string{
+		"DATABASE_HOST": "localhost",
+		"DATABASE_NAME": "dial_somosdialog_dev",
+		"DATABASE_USER": "root",
+		"DATABASE_PASS": "",
+	},
+}
 
 func (v *VaultMockService) NewVaultService(cfg *VaultConfig) IVaultService {
 	service := &VaultMockService{
@@ -26,7 +27,7 @@ func (v *VaultMockService) NewVaultService(cfg *VaultConfig) IVaultService {
 
 func (s *VaultMockService) GetSecret(key VaultSecretKey, clientSlug string) (string, error) {
 
-	value, ok := VaultMockData[string(key)]
+	value, ok := (*s.mockData)[string(key)]
 	if !ok {
 		return "", fmt.Errorf("secret value type assertion failed")
 	}
@@ -37,14 +38,12 @@ func (s *VaultMockService) GetSecret(key VaultSecretKey, clientSlug string) (str
 func (s *VaultMockService) GetSecrets(clientSlug string, keys []string) (map[string]interface{}, error) {
 	filteredSecrets := make(map[string]interface{})
 	for _, key := range keys {
-		if val, ok := VaultMockData[key]; ok {
-			filteredSecrets[key] = val
+		if s.mockData == nil {
+			if val, ok := (*s.mockData)[key]; ok {
+				filteredSecrets[key] = val
+			}
 		}
 	}
 
 	return filteredSecrets, nil
-}
-
-func (s *VaultMockService) UpdateMockSecrets(data map[string]string) {
-	VaultMockData = data
 }
