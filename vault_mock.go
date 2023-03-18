@@ -9,15 +9,6 @@ type VaultMockService struct {
 	mockData *map[string]string
 }
 
-var VaultMock = VaultMockService{
-	mockData: &map[string]string{
-		"DATABASE_HOST": "localhost",
-		"DATABASE_NAME": "dial_somosdialog_dev",
-		"DATABASE_USER": "root",
-		"DATABASE_PASS": "",
-	},
-}
-
 func (v *VaultMockService) NewVaultService(cfg *VaultConfig) IVaultService {
 	service := &VaultMockService{
 		config: cfg,
@@ -46,4 +37,8 @@ func (s *VaultMockService) GetSecrets(clientSlug string, keys []string) (map[str
 	}
 
 	return filteredSecrets, nil
+}
+
+func SetMockData(vaultMock VaultMockService, data *map[string]string) {
+	vaultMock.mockData = data
 }
