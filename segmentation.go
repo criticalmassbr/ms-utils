@@ -231,6 +231,16 @@ const (
 	FieldNameName  FieldName = "name"
 	FieldNameEmail FieldName = "email"
 	FieldNamePhone FieldName = "phone"
+
+	FieldNameRelationalCustom1 FieldName = "custom1"
+	FieldNameRelationalCustom2 FieldName = "custom2"
+	FieldNameRelationalCustom3 FieldName = "custom3"
+	FieldNameRelationalCustom4 FieldName = "custom4"
+	FieldNameRelationalCustom5 FieldName = "custom5"
+	FieldNameRelationalCustom6 FieldName = "custom6"
+	FieldNameRelationalCustom7 FieldName = "custom7"
+	FieldNameRelationalCustom8 FieldName = "custom8"
+	FieldNameRelationalCustom9 FieldName = "custom9"
 )
 
 type FieldCount string
@@ -242,6 +252,16 @@ const (
 	FieldCountHierarchy   FieldCount = "hierarchy"
 	FieldCountCity        FieldCount = "city"
 	FieldCountState       FieldCount = "state"
+
+	FieldCountRelationalCustom1 FieldCount = "custom1"
+	FieldCountRelationalCustom2 FieldCount = "custom2"
+	FieldCountRelationalCustom3 FieldCount = "custom3"
+	FieldCountRelationalCustom4 FieldCount = "custom4"
+	FieldCountRelationalCustom5 FieldCount = "custom5"
+	FieldCountRelationalCustom6 FieldCount = "custom6"
+	FieldCountRelationalCustom7 FieldCount = "custom7"
+	FieldCountRelationalCustom8 FieldCount = "custom8"
+	FieldCountRelationalCustom9 FieldCount = "custom9"
 )
 
 type RFCDate struct {
@@ -303,7 +323,7 @@ var (
 			},
 		},
 		{
-			Fields: []FieldName{FieldNameDepartmentId, FieldNameJobId, FieldNameCompanySite, FieldNameHierarchy},
+			Fields: []FieldName{FieldNameDepartmentId, FieldNameJobId, FieldNameCompanySite, FieldNameHierarchy, FieldNameRelationalCustom1, FieldNameRelationalCustom2, FieldNameRelationalCustom3, FieldNameRelationalCustom4, FieldNameRelationalCustom5, FieldNameRelationalCustom6, FieldNameRelationalCustom7, FieldNameRelationalCustom8, FieldNameRelationalCustom9},
 			ValidOperators: []ValidateOperator{
 				{
 					Operators:           []Operator{OperatorEq, OperatorNotEq, OperatorIn, OperatorNotIn},
