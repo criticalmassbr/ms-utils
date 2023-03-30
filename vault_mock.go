@@ -38,7 +38,7 @@ func (s *VaultMockService) GetSecret(key VaultSecretKey, clientSlug string) (str
 func (s *VaultMockService) GetSecrets(clientSlug string, keys []string) (map[string]interface{}, error) {
 	filteredSecrets := make(map[string]interface{})
 	for _, key := range keys {
-		if s.mockData == nil {
+		if s.mockData != nil {
 			if val, ok := (*s.mockData)[key]; ok {
 				filteredSecrets[key] = val
 			}
