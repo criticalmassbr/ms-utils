@@ -28,10 +28,6 @@ type HealthCheckRabbitMQConfig struct {
 }
 
 type HealthCheckRedisConfig struct {
-	Url string
-}
-
-type HealthCheckRedisClusterConfig struct {
 	Urls []string
 }
 
@@ -41,11 +37,10 @@ type HealthCheckVaultConfig struct {
 }
 
 type HealthCheckConfig struct {
-	HealthCheckDBConfig           []HealthCheckDBConfig
-	HealthCheckRabbitMQConfig     *HealthCheckRabbitMQConfig
-	HealthCheckRedisConfig        *HealthCheckRedisConfig
-	HealthCheckRedisClusterConfig *HealthCheckRedisClusterConfig
-	HealthCheckVaultConfig        *HealthCheckVaultConfig
+	HealthCheckDBConfig       []HealthCheckDBConfig
+	HealthCheckRabbitMQConfig *HealthCheckRabbitMQConfig
+	HealthCheckRedisConfig    *HealthCheckRedisConfig
+	HealthCheckVaultConfig    *HealthCheckVaultConfig
 }
 
 var HealthCheck = HealthCheckConfig{}
@@ -86,17 +81,7 @@ func (h HealthCheckConfig) StartServer(port string) (func(), error) {
 			}
 
 			if HealthCheck.HealthCheckRedisConfig != nil {
-				redisErr := redisHealthCheck(HealthCheck.HealthCheckRedisConfig.Url)
-				if redisErr != nil {
-					w.WriteHeader(http.StatusServiceUnavailable)
-					w.Write([]byte("FAIL"))
-					fmt.Printf("[UTILS][WEBSERVER] Redis server is down")
-					return
-				}
-			}
-
-			if HealthCheck.HealthCheckRedisClusterConfig != nil {
-				if err := redisClusterHealthCheck(*HealthCheck.HealthCheckRedisClusterConfig); err != nil {
+				if err := redisHealthCheck(*HealthCheck.HealthCheckRedisConfig); err != nil {
 					w.WriteHeader(http.StatusServiceUnavailable)
 					w.Write([]byte("FAIL"))
 					fmt.Printf("[UTILS][WEBSERVER] Redis cluster is down")
@@ -167,21 +152,7 @@ func dbHealthCheck(dbType string, url string) error {
 	return nil
 }
 
-func redisHealthCheck(url string) error {
-	client := redis.NewClient(&redis.Options{
-		Addr: url,
-	})
-	defer client.Close()
-
-	_, err := client.Ping().Result()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func redisClusterHealthCheck(cfg HealthCheckRedisClusterConfig) error {
+func redisHealthCheck(cfg HealthCheckRedisConfig) error {
 	client := redis.NewClusterClient(&redis.ClusterOptions{
 		Addrs: cfg.Urls,
 	})
