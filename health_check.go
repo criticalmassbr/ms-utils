@@ -28,7 +28,7 @@ type HealthCheckRabbitMQConfig struct {
 }
 
 type HealthCheckRedisConfig struct {
-	Url string
+	Urls []string
 }
 
 type HealthCheckVaultConfig struct {
@@ -81,11 +81,10 @@ func (h HealthCheckConfig) StartServer(port string) (func(), error) {
 			}
 
 			if HealthCheck.HealthCheckRedisConfig != nil {
-				redisErr := redisHealthCheck(HealthCheck.HealthCheckRedisConfig.Url)
-				if redisErr != nil {
+				if err := redisHealthCheck(*HealthCheck.HealthCheckRedisConfig); err != nil {
 					w.WriteHeader(http.StatusServiceUnavailable)
 					w.Write([]byte("FAIL"))
-					fmt.Printf("[UTILS][WEBSERVER] Redis server is down")
+					fmt.Printf("[UTILS][WEBSERVER] Redis cluster is down")
 					return
 				}
 			}
@@ -153,14 +152,13 @@ func dbHealthCheck(dbType string, url string) error {
 	return nil
 }
 
-func redisHealthCheck(url string) error {
-	client := redis.NewClient(&redis.Options{
-		Addr: url,
+func redisHealthCheck(cfg HealthCheckRedisConfig) error {
+	client := redis.NewClusterClient(&redis.ClusterOptions{
+		Addrs: cfg.Urls,
 	})
 	defer client.Close()
 
-	_, err := client.Ping().Result()
-	if err != nil {
+	if err := client.Ping().Err(); err != nil {
 		return err
 	}
 
