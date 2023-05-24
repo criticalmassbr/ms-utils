@@ -21,8 +21,8 @@ type VaultConfig struct {
 }
 
 type IVaultService interface {
-	GetSecret(key VaultSecretKey, clientSlug string) (interface{}, error)
-	GetSecrets(keys []string, clientSlug string) (map[string]interface{}, error)
+	GetSecret(clientSlug string, key VaultSecretKey) (interface{}, error)
+	GetSecrets(clientSlug string, keys []string) (map[string]interface{}, error)
 }
 
 type VaultService struct {
@@ -162,7 +162,7 @@ func (s *VaultService) manageTokenLifecycle(token *api.Secret) error {
 	}
 }
 
-func (s *VaultService) GetSecret(key VaultSecretKey, clientSlug string) (interface{}, error) {
+func (s *VaultService) GetSecret(clientSlug string, key VaultSecretKey) (interface{}, error) {
 	secret, err := s.client.KVv1(s.config.MountPath).Get(context.Background(), clientSlug)
 	if err != nil {
 		return "", fmt.Errorf("unable to read secret: %v", err)
@@ -176,7 +176,7 @@ func (s *VaultService) GetSecret(key VaultSecretKey, clientSlug string) (interfa
 	return value, nil
 }
 
-func (s *VaultService) GetSecrets(keys []string, clientSlug string) (map[string]interface{}, error) {
+func (s *VaultService) GetSecrets(clientSlug string, keys []string) (map[string]interface{}, error) {
 	secrets, err := s.client.KVv1(s.config.MountPath).Get(context.Background(), clientSlug)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read secret: %v", err)

@@ -21,7 +21,7 @@ func NewMockVaultService(mockData VaultMockData) IVaultService {
 	return service
 }
 
-func (s *VaultMockService) GetSecret(key VaultSecretKey, clientSlug string) (interface{}, error) {
+func (s *VaultMockService) GetSecret(clientSlug string, key VaultSecretKey) (interface{}, error) {
 	clientSecrets, ok := s.mockData[string(clientSlug)]
 	if !ok {
 		return "", fmt.Errorf("client slug does was not set")
@@ -35,7 +35,7 @@ func (s *VaultMockService) GetSecret(key VaultSecretKey, clientSlug string) (int
 	return value, nil
 }
 
-func (s *VaultMockService) GetSecrets(keys []string, clientSlug string) (map[string]interface{}, error) {
+func (s *VaultMockService) GetSecrets(clientSlug string, keys []string) (map[string]interface{}, error) {
 	filteredSecrets := make(map[string]interface{})
 	clientSecrets := s.mockData[string(clientSlug)]
 	for _, key := range keys {
