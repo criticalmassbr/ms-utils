@@ -35,13 +35,13 @@ func (s *VaultMockService) GetSecret(clientSlug string, key VaultSecretKey) (int
 	return value, nil
 }
 
-func (s *VaultMockService) GetSecrets(clientSlug string, keys []string) (map[string]interface{}, error) {
+func (s *VaultMockService) GetSecrets(clientSlug string, keys []VaultSecretKey) (map[string]interface{}, error) {
 	filteredSecrets := make(map[string]interface{})
-	clientSecrets := s.mockData[string(clientSlug)]
+	clientSecrets := s.mockData[clientSlug]
 	for _, key := range keys {
 		if s.mockData != nil {
 			if val, ok := clientSecrets[string(key)]; ok {
-				filteredSecrets[key] = val
+				filteredSecrets[string(key)] = val
 			}
 		}
 	}

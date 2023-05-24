@@ -22,7 +22,7 @@ type VaultConfig struct {
 
 type IVaultService interface {
 	GetSecret(clientSlug string, key VaultSecretKey) (interface{}, error)
-	GetSecrets(clientSlug string, keys []string) (map[string]interface{}, error)
+	GetSecrets(clientSlug string, keys []VaultSecretKey) (map[string]interface{}, error)
 }
 
 type VaultService struct {
@@ -176,7 +176,7 @@ func (s *VaultService) GetSecret(clientSlug string, key VaultSecretKey) (interfa
 	return value, nil
 }
 
-func (s *VaultService) GetSecrets(clientSlug string, keys []string) (map[string]interface{}, error) {
+func (s *VaultService) GetSecrets(clientSlug string, keys []VaultSecretKey) (map[string]interface{}, error) {
 	secrets, err := s.client.KVv1(s.config.MountPath).Get(context.Background(), clientSlug)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read secret: %v", err)
@@ -189,8 +189,8 @@ func (s *VaultService) GetSecrets(clientSlug string, keys []string) (map[string]
 
 	filteredSecrets := make(map[string]interface{})
 	for _, key := range keys {
-		if val, ok := values[key]; ok {
-			filteredSecrets[key] = val
+		if val, ok := values[string(key)]; ok {
+			filteredSecrets[string(key)] = val
 		}
 	}
 

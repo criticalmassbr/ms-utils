@@ -33,7 +33,7 @@ func TestVaultMockGetSecrets(t *testing.T) {
 
 	vault := utils.NewMockVaultService(vaultMockData)
 
-	value, err := vault.GetSecrets("somosdialog", []string{"TABS_DB_URL", "OTHER_VAR"})
+	value, err := vault.GetSecrets("somosdialog", []utils.VaultSecretKey{"TABS_DB_URL", "OTHER_VAR"})
 
 	assert.Nil(t, err)
 	assert.Equal(t, map[string]interface{}{
