@@ -4,54 +4,47 @@ import (
 	"fmt"
 )
 
+type VaultMockData map[string]map[string]interface{}
+
 type VaultMockService struct {
-	config   *VaultConfig
-	mockData *map[string]string
+	mockData VaultMockData
 }
 
 var VaultMock = VaultMockService{
-	mockData: &map[string]string{
-		"DATABASE_HOST": "localhost",
-		"DATABASE_NAME": "dial_somosdialog_dev",
-		"DATABASE_USER": "root",
-		"DATABASE_PASS": "",
-	},
+	mockData: make(VaultMockData),
 }
 
-func (v *VaultMockService) NewVaultService(cfg *VaultConfig) IVaultService {
+func NewMockVaultService(mockData VaultMockData) IVaultService {
 	service := &VaultMockService{
-		config: cfg,
+		mockData: mockData,
 	}
 	return service
 }
 
-func (s *VaultMockService) GetSecret(key VaultSecretKey, clientSlug string) (string, error) {
-
-	value, ok := (*s.mockData)[string(key)]
+func (s *VaultMockService) GetSecret(clientSlug string, key VaultSecretKey) (interface{}, error) {
+	clientSecrets, ok := s.mockData[string(clientSlug)]
 	if !ok {
-		return "", fmt.Errorf("secret value type assertion failed")
+		return "", fmt.Errorf("client slug does was not set")
+	}
+
+	value, ok := clientSecrets[string(key)]
+	if !ok {
+		return "", fmt.Errorf("secret is not set on client")
 	}
 
 	return value, nil
 }
 
-func (s *VaultMockService) GetSecrets(clientSlug string, keys []string) (map[string]interface{}, error) {
+func (s *VaultMockService) GetSecrets(clientSlug string, keys []VaultSecretKey) (map[string]interface{}, error) {
 	filteredSecrets := make(map[string]interface{})
+	clientSecrets := s.mockData[clientSlug]
 	for _, key := range keys {
 		if s.mockData != nil {
-			if val, ok := (*s.mockData)[key]; ok {
-				filteredSecrets[key] = val
+			if val, ok := clientSecrets[string(key)]; ok {
+				filteredSecrets[string(key)] = val
 			}
 		}
 	}
 
 	return filteredSecrets, nil
-}
-
-func SetVaultMockData(data *map[string]string) IVaultService {
-	VaultMock = VaultMockService{
-		mockData: data,
-	}
-
-	return &VaultMock
 }

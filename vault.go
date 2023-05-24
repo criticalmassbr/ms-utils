@@ -21,9 +21,8 @@ type VaultConfig struct {
 }
 
 type IVaultService interface {
-	NewVaultService(cfg *VaultConfig) IVaultService
-	GetSecret(key VaultSecretKey, clientSlug string) (string, error)
-	GetSecrets(clientSlug string, keys []string) (map[string]interface{}, error)
+	GetSecret(clientSlug string, key VaultSecretKey) (interface{}, error)
+	GetSecrets(clientSlug string, keys []VaultSecretKey) (map[string]interface{}, error)
 }
 
 type VaultService struct {
@@ -35,7 +34,7 @@ type VaultSecretKey string
 
 var Vault = VaultService{}
 
-func (v *VaultService) NewVaultService(cfg *VaultConfig) IVaultService {
+func NewVaultService(cfg *VaultConfig) IVaultService {
 	service := &VaultService{
 		config: cfg,
 	}
@@ -163,13 +162,13 @@ func (s *VaultService) manageTokenLifecycle(token *api.Secret) error {
 	}
 }
 
-func (s *VaultService) GetSecret(key VaultSecretKey, clientSlug string) (string, error) {
+func (s *VaultService) GetSecret(clientSlug string, key VaultSecretKey) (interface{}, error) {
 	secret, err := s.client.KVv1(s.config.MountPath).Get(context.Background(), clientSlug)
 	if err != nil {
 		return "", fmt.Errorf("unable to read secret: %v", err)
 	}
 
-	value, ok := secret.Data["data"].(map[string]interface{})[string(key)].(string)
+	value, ok := secret.Data["data"].(map[string]interface{})[string(key)]
 	if !ok {
 		return "", fmt.Errorf("secret value type assertion failed")
 	}
@@ -177,7 +176,7 @@ func (s *VaultService) GetSecret(key VaultSecretKey, clientSlug string) (string,
 	return value, nil
 }
 
-func (s *VaultService) GetSecrets(clientSlug string, keys []string) (map[string]interface{}, error) {
+func (s *VaultService) GetSecrets(clientSlug string, keys []VaultSecretKey) (map[string]interface{}, error) {
 	secrets, err := s.client.KVv1(s.config.MountPath).Get(context.Background(), clientSlug)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read secret: %v", err)
@@ -190,8 +189,8 @@ func (s *VaultService) GetSecrets(clientSlug string, keys []string) (map[string]
 
 	filteredSecrets := make(map[string]interface{})
 	for _, key := range keys {
-		if val, ok := values[key]; ok {
-			filteredSecrets[key] = val
+		if val, ok := values[string(key)]; ok {
+			filteredSecrets[string(key)] = val
 		}
 	}
 
