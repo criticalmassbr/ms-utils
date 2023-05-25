@@ -34,12 +34,12 @@ type VaultSecretKey string
 
 var Vault = VaultService{}
 
-func NewVaultService(cfg *VaultConfig) IVaultService {
+func NewVaultService(cfg *VaultConfig) (IVaultService, error) {
 	service := &VaultService{
 		config: cfg,
 	}
-	service.init()
-	return service
+	err := service.init()
+	return service, err
 }
 
 func (s *VaultService) init() error {
