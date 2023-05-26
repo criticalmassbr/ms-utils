@@ -13,11 +13,11 @@ import (
 )
 
 type VaultConfig struct {
-	RoleId    string
-	SecretId  string
-	Url       string
-	MountPath string
-	Cert      string
+	RoleId    string `env-required:"true" yaml:"role_id" env:"VAULT_ROLE_ID"`
+	SecretId  string `env-required:"true" yaml:"secret_id" env:"VAULT_SECRET_ID"`
+	Url       string `env-required:"true" yaml:"url" env:"VAULT_ADDR"`
+	MountPath string `env-required:"true" yaml:"mount_path" env:"VAULT_MOUNT_PATH"`
+	Cert      string `env-required:"true" yaml:"cert" env:"VAULT_CERT"`
 }
 
 type IVaultService interface {
@@ -34,12 +34,12 @@ type VaultSecretKey string
 
 var Vault = VaultService{}
 
-func NewVaultService(cfg *VaultConfig) IVaultService {
+func NewVaultService(cfg *VaultConfig) (IVaultService, error) {
 	service := &VaultService{
 		config: cfg,
 	}
-	service.init()
-	return service
+	err := service.init()
+	return service, err
 }
 
 func (s *VaultService) init() error {
