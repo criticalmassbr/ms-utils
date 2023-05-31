@@ -228,6 +228,8 @@ const (
 	FieldNameCompanySite  FieldName = "companySite"
 	FieldNameHierarchy    FieldName = "hierarchy"
 
+	FieldNameGroup FieldName = "group"
+
 	FieldNameName  FieldName = "name"
 	FieldNameEmail FieldName = "email"
 	FieldNamePhone FieldName = "phone"
@@ -252,6 +254,7 @@ const (
 	FieldCountHierarchy   FieldCount = "hierarchy"
 	FieldCountCity        FieldCount = "city"
 	FieldCountState       FieldCount = "state"
+	FieldCountGroup       FieldCount = "group"
 
 	FieldCountRelationalCustom1 FieldCount = "custom1"
 	FieldCountRelationalCustom2 FieldCount = "custom2"
@@ -365,7 +368,7 @@ var (
 			},
 		},
 		{
-			Fields: []FieldName{FieldNameDepartmentId, FieldNameJobId, FieldNameCompanySite, FieldNameHierarchy},
+			Fields: []FieldName{FieldNameDepartmentId, FieldNameJobId, FieldNameCompanySite, FieldNameHierarchy, FieldNameGroup},
 			ValidOperators: []ValidateOperator{
 				{
 					Operators:           []Operator{OperatorEq, OperatorNotEq, OperatorIn, OperatorNotIn},
