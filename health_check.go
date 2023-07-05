@@ -11,10 +11,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-redis/redis"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/hashicorp/vault/api"
 	_ "github.com/lib/pq"
+	"github.com/redis/go-redis/v9"
 	"github.com/streadway/amqp"
 )
 
@@ -45,8 +45,7 @@ type HealthCheckConfig struct {
 
 var HealthCheck = HealthCheckConfig{}
 
-func (h HealthCheckConfig) StartServer(port string) (func(), error) {
-
+func (h HealthCheckConfig) StartServer(ctx context.Context, port string) (func(), error) {
 	server := &http.Server{Addr: ":" + port}
 	_, cancel := context.WithCancel(context.Background())
 
@@ -63,7 +62,7 @@ func (h HealthCheckConfig) StartServer(port string) (func(), error) {
 				if rabbitErr != nil {
 					w.WriteHeader(http.StatusServiceUnavailable)
 					w.Write([]byte("FAIL"))
-					fmt.Printf("[UTILS][WEBSERVER] RabbitMQ server is down")
+					fmt.Printf("[UTILS][WEBSERVER] RabbitMQ server is down: %v\n", rabbitErr)
 					return
 				}
 			}
@@ -74,17 +73,17 @@ func (h HealthCheckConfig) StartServer(port string) (func(), error) {
 					if dbErr != nil {
 						w.WriteHeader(http.StatusServiceUnavailable)
 						w.Write([]byte("FAIL"))
-						fmt.Printf("[UTILS][WEBSERVER] DB server is down: %s\n", dbConfig.Type)
+						fmt.Printf("[UTILS][WEBSERVER] DB server is down: %s %v\n", dbConfig.Type, dbErr)
 						return
 					}
 				}
 			}
 
 			if HealthCheck.HealthCheckRedisConfig != nil {
-				if err := redisHealthCheck(*HealthCheck.HealthCheckRedisConfig); err != nil {
+				if err := redisHealthCheck(ctx, *HealthCheck.HealthCheckRedisConfig); err != nil {
 					w.WriteHeader(http.StatusServiceUnavailable)
 					w.Write([]byte("FAIL"))
-					fmt.Printf("[UTILS][WEBSERVER] Redis cluster is down")
+					fmt.Printf("[UTILS][WEBSERVER] Redis cluster is down %v\n", err)
 					return
 				}
 			}
@@ -94,7 +93,7 @@ func (h HealthCheckConfig) StartServer(port string) (func(), error) {
 				if vaultErr != nil {
 					w.WriteHeader(http.StatusServiceUnavailable)
 					w.Write([]byte("FAIL"))
-					fmt.Printf("[UTILS][WEBSERVER] Vault server is down")
+					fmt.Printf("[UTILS][WEBSERVER] Vault server is down %v\n", vaultErr)
 					return
 				}
 			}
@@ -152,13 +151,13 @@ func dbHealthCheck(dbType string, url string) error {
 	return nil
 }
 
-func redisHealthCheck(cfg HealthCheckRedisConfig) error {
+func redisHealthCheck(ctx context.Context, cfg HealthCheckRedisConfig) error {
 	client := redis.NewClusterClient(&redis.ClusterOptions{
 		Addrs: cfg.Urls,
 	})
 	defer client.Close()
 
-	if err := client.Ping().Err(); err != nil {
+	if err := client.Ping(ctx).Err(); err != nil {
 		return err
 	}
 
