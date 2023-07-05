@@ -46,7 +46,9 @@ type config[C any] struct {
 
 type configurationDBConfig struct {
 	Config struct {
-		DSN string `koanf:"dsn" validate:"required"`
+		DB struct {
+			URL string `koanf:"url" validate:"required"`
+		} `koanf:"db" validate:"required"`
 	} `koanf:"config" validate:"required"`
 }
 
@@ -112,7 +114,7 @@ func (c *config[C]) DB(db *sql.DB) ConfigLoader[C] {
 			return c
 		}
 
-		configurationDB, err := sql.Open("postgres", c.configurationDBConfig.Config.DSN)
+		configurationDB, err := sql.Open("postgres", c.configurationDBConfig.Config.DB.URL)
 		if err != nil {
 			c.err = err
 			return c
