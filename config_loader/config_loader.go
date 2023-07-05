@@ -19,6 +19,7 @@ import (
 type ConfigLoader[C any] interface {
 	// Prefix defaults to "APP_" if not set
 	DefaultInit(prefix string, overrideYAMLPath string) ConfigLoader[C]
+	Env(prefix string) ConfigLoader[C]
 	DB(db *sql.DB) ConfigLoader[C]
 	YAML(path string) ConfigLoader[C]
 	Validate() ConfigLoader[C]
@@ -65,6 +66,7 @@ func (c *config[C]) DefaultInit(prefix string, overrideYAMLPath string) ConfigLo
 	if c.err != nil {
 		return c
 	}
+
 	if prefix != "" {
 		c.prefix = prefix
 	}
@@ -167,6 +169,28 @@ func (c *config[C]) YAML(path string) ConfigLoader[C] {
 	}
 
 	if err := c.k.Load(file.Provider(path), yaml.Parser()); err != nil {
+		c.err = err
+		return c
+	}
+
+	if err := c.k.Unmarshal("", &c.context.Config); err != nil {
+		c.err = err
+		return c
+	}
+
+	return c
+}
+
+func (c *config[C]) Env(prefix string) ConfigLoader[C] {
+	if c.err != nil {
+		return c
+	}
+
+	if prefix != "" {
+		c.prefix = prefix
+	}
+
+	if err := c.k.Load(env.Provider(c.prefix, c.delimiter, c.vaultEnvTransform), nil); err != nil {
 		c.err = err
 		return c
 	}

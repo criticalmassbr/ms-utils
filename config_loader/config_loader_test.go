@@ -2,6 +2,7 @@ package configloader_test
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 	"testing"
 
@@ -18,7 +19,7 @@ type testConfig struct {
 }
 
 type testConfigApp struct {
-	ServiceName string `koanf:"service_name" validate:"required"`
+	ServiceName string `koanf:"service-name" validate:"required"`
 	Environment string `koanf:"environment" validate:"required"`
 }
 
@@ -79,5 +80,27 @@ func TestConfigLoader(t *testing.T) {
 		assert.NotNil(t, context)
 
 		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("Test Env()", func(t *testing.T) {
+		loader := configLoader.New[testConfig](mockValidator)
+
+		expectedConfig := &testConfig{
+			App: testConfigApp{
+				ServiceName: "config_loader",
+				Environment: "test",
+			},
+			Source: "env",
+		}
+
+		os.Setenv("APP_APP_SERVICE-NAME", "config_loader")
+		os.Setenv("APP_APP_ENVIRONMENT", "test")
+		os.Setenv("APP_SOURCE", "env")
+
+		context, err := loader.Env("").Context()
+		assert.NoError(t, err)
+		assert.True(t, reflect.DeepEqual(context, expectedConfig), fmt.Sprintf("Expected: %+v\nGot: %+v", expectedConfig, context))
+
+		os.Clearenv()
 	})
 }
