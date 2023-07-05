@@ -48,3 +48,13 @@ func (s *VaultMockService) GetSecrets(clientSlug string, keys []VaultSecretKey) 
 
 	return filteredSecrets, nil
 }
+
+func (s *VaultMockService) List() ([]string, error) {
+	keys := make([]string, 0)
+
+	for key := range s.mockData {
+		keys = append(keys, key)
+	}
+
+	return keys, nil
+}

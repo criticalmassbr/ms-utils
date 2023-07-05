@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -13,16 +14,17 @@ import (
 )
 
 type VaultConfig struct {
-	RoleId    string `env-required:"true" yaml:"role_id" env:"VAULT_ROLE_ID"`
-	SecretId  string `env-required:"true" yaml:"secret_id" env:"VAULT_SECRET_ID"`
-	Url       string `env-required:"true" yaml:"url" env:"VAULT_ADDR"`
-	MountPath string `env-required:"true" yaml:"mount_path" env:"VAULT_MOUNT_PATH"`
-	Cert      string `env-required:"true" yaml:"cert" env:"VAULT_CERT"`
+	RoleId    string `koanf:"role_id" required:"true"`
+	SecretId  string `koanf:"secret_id" required:"true"`
+	Url       string `koanf:"url" required:"true"`
+	MountPath string `koanf:"mount_path" required:"true"`
+	Cert      string `koanf:"cert" required:"true"`
 }
 
 type IVaultService interface {
 	GetSecret(clientSlug string, key VaultSecretKey) (interface{}, error)
 	GetSecrets(clientSlug string, keys []VaultSecretKey) (map[string]interface{}, error)
+	List() ([]string, error)
 }
 
 type VaultService struct {
@@ -31,8 +33,6 @@ type VaultService struct {
 }
 
 type VaultSecretKey string
-
-var Vault = VaultService{}
 
 func NewVaultService(cfg *VaultConfig) (IVaultService, error) {
 	service := &VaultService{
@@ -163,7 +163,7 @@ func (s *VaultService) manageTokenLifecycle(token *api.Secret) error {
 }
 
 func (s *VaultService) GetSecret(clientSlug string, key VaultSecretKey) (interface{}, error) {
-	secret, err := s.client.KVv1(s.config.MountPath).Get(context.Background(), clientSlug)
+	secret, err := s.client.KVv1(fmt.Sprintf("%s/data", s.config.MountPath)).Get(context.Background(), clientSlug)
 	if err != nil {
 		return "", fmt.Errorf("unable to read secret: %v", err)
 	}
@@ -177,7 +177,7 @@ func (s *VaultService) GetSecret(clientSlug string, key VaultSecretKey) (interfa
 }
 
 func (s *VaultService) GetSecrets(clientSlug string, keys []VaultSecretKey) (map[string]interface{}, error) {
-	secrets, err := s.client.KVv1(s.config.MountPath).Get(context.Background(), clientSlug)
+	secrets, err := s.client.KVv1(fmt.Sprintf("%s/data", s.config.MountPath)).Get(context.Background(), clientSlug)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read secret: %v", err)
 	}
@@ -195,4 +195,31 @@ func (s *VaultService) GetSecrets(clientSlug string, keys []VaultSecretKey) (map
 	}
 
 	return filteredSecrets, nil
+}
+
+func (s *VaultService) List() ([]string, error) {
+	secrets, err := s.client.Logical().List(fmt.Sprintf("%s/metadata", s.config.MountPath))
+	if err != nil {
+		return nil, fmt.Errorf("unable to read secret: %v", err)
+	}
+
+	if secrets.Data == nil {
+		err := errors.New("unable to read secret")
+		for _, warning := range secrets.Warnings {
+			err = errors.Join(err, fmt.Errorf(warning))
+		}
+		return nil, err
+	}
+
+	values, ok := secrets.Data["keys"].([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("secret value type assertion failed")
+	}
+
+	keys := make([]string, 0)
+	for _, value := range values {
+		keys = append(keys, fmt.Sprintf("%v", value))
+	}
+
+	return keys, nil
 }

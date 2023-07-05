@@ -1,0 +1,4 @@
+source: yaml
+app:
+  service-name: config_loader
+  environment: test
