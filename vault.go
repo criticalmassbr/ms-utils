@@ -14,11 +14,11 @@ import (
 )
 
 type VaultConfig struct {
-	RoleId    string `env-required:"true" yaml:"role_id" env:"VAULT_ROLE_ID"`
-	SecretId  string `env-required:"true" yaml:"secret_id" env:"VAULT_SECRET_ID"`
-	Url       string `env-required:"true" yaml:"url" env:"VAULT_ADDR"`
-	MountPath string `env-required:"true" yaml:"mount_path" env:"VAULT_MOUNT_PATH"`
-	Cert      string `env-required:"true" yaml:"cert" env:"VAULT_CERT"`
+	RoleId    string `koanf:"role_id" required:"true"`
+	SecretId  string `koanf:"secret_id" required:"true"`
+	Url       string `koanf:"url" required:"true"`
+	MountPath string `koanf:"mount_path" required:"true"`
+	Cert      string `koanf:"cert" required:"true"`
 }
 
 type IVaultService interface {

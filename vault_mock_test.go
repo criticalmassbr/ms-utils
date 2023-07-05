@@ -18,7 +18,7 @@ func TestVaultMockGetSecret(t *testing.T) {
 
 	vault := utils.NewMockVaultService(vaultMockData)
 
-	value, err := vault.GetSecret("TABS_DB_URL", "somosdialog")
+	value, err := vault.GetSecret("somosdialog", "TABS_DB_URL")
 
 	assert.Nil(t, err)
 	assert.Equal(t, "value", value)
