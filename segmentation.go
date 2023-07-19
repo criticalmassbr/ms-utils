@@ -25,8 +25,9 @@ type ExcludableBurst struct {
 }
 
 type FieldFilter[T Excludable] struct {
-	FieldName FieldCount `json:"fieldName"`
-	Filter    Filter[T]  `json:"filter"`
+	FieldName  FieldCount `json:"fieldName"`
+	EmployeeID int        `json:"employeeId"`
+	Filter     Filter[T]  `json:"filter"`
 }
 
 type Condition struct {
@@ -226,6 +227,8 @@ const (
 	FieldNameDepartmentId FieldName = "department"
 	FieldNameJobId        FieldName = "job"
 	FieldNameCompanySite  FieldName = "companySite"
+	FieldNameCity         FieldName = "city"
+	FieldNameState        FieldName = "state"
 	FieldNameHierarchy    FieldName = "hierarchy"
 
 	FieldNameGroup FieldName = "group"
@@ -326,7 +329,7 @@ var (
 			},
 		},
 		{
-			Fields: []FieldName{FieldNameDepartmentId, FieldNameJobId, FieldNameCompanySite, FieldNameHierarchy, FieldNameRelationalCustom1, FieldNameRelationalCustom2, FieldNameRelationalCustom3, FieldNameRelationalCustom4, FieldNameRelationalCustom5, FieldNameRelationalCustom6, FieldNameRelationalCustom7, FieldNameRelationalCustom8, FieldNameRelationalCustom9},
+			Fields: []FieldName{FieldNameDepartmentId, FieldNameJobId, FieldNameCompanySite, FieldNameHierarchy, FieldNameGroup, FieldNameRelationalCustom1, FieldNameRelationalCustom2, FieldNameRelationalCustom3, FieldNameRelationalCustom4, FieldNameRelationalCustom5, FieldNameRelationalCustom6, FieldNameRelationalCustom7, FieldNameRelationalCustom8, FieldNameRelationalCustom9},
 			ValidOperators: []ValidateOperator{
 				{
 					Operators:           []Operator{OperatorEq, OperatorNotEq, OperatorIn, OperatorNotIn},
@@ -395,7 +398,30 @@ var (
 			},
 		},
 	}
+
+	ValidCountFields = []FieldCount{
+		FieldCountDepartment,
+		FieldCountJob,
+		FieldCountCompanySite,
+		FieldCountHierarchy,
+		FieldCountCity,
+		FieldCountState,
+		FieldCountGroup,
+		FieldCountRelationalCustom1,
+		FieldCountRelationalCustom2,
+		FieldCountRelationalCustom3,
+		FieldCountRelationalCustom4,
+		FieldCountRelationalCustom5,
+		FieldCountRelationalCustom6,
+		FieldCountRelationalCustom7,
+		FieldCountRelationalCustom8,
+		FieldCountRelationalCustom9,
+	}
 )
+
+func (filter *FieldFilter[T]) Validate(validCountFields []FieldCount, validConditions []ValidateCondition) bool {
+	return Contains(validCountFields, filter.FieldName) && isEveryFilterConditionValid(&filter.Filter, validConditions)
+}
 
 func (filter *Filter[T]) Validate(validConditions []ValidateCondition) bool {
 	return isEveryFilterConditionValid(filter, validConditions)
