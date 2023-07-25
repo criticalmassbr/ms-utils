@@ -227,11 +227,11 @@ const (
 	FieldNameDepartmentId FieldName = "department"
 	FieldNameJobId        FieldName = "job"
 	FieldNameCompanySite  FieldName = "companySite"
+	FieldNameUnit         FieldName = "unit"
 	FieldNameCity         FieldName = "city"
 	FieldNameState        FieldName = "state"
 	FieldNameHierarchy    FieldName = "hierarchy"
-
-	FieldNameGroup FieldName = "group"
+	FieldNameGroup        FieldName = "group"
 
 	FieldNameName  FieldName = "name"
 	FieldNameEmail FieldName = "email"
@@ -258,6 +258,7 @@ const (
 	FieldCountCity        FieldCount = "city"
 	FieldCountState       FieldCount = "state"
 	FieldCountGroup       FieldCount = "group"
+	FieldCountLocation    FieldCount = "location"
 
 	FieldCountRelationalCustom1 FieldCount = "custom1"
 	FieldCountRelationalCustom2 FieldCount = "custom2"
@@ -329,7 +330,7 @@ var (
 			},
 		},
 		{
-			Fields: []FieldName{FieldNameDepartmentId, FieldNameJobId, FieldNameCompanySite, FieldNameHierarchy, FieldNameGroup, FieldNameRelationalCustom1, FieldNameRelationalCustom2, FieldNameRelationalCustom3, FieldNameRelationalCustom4, FieldNameRelationalCustom5, FieldNameRelationalCustom6, FieldNameRelationalCustom7, FieldNameRelationalCustom8, FieldNameRelationalCustom9},
+			Fields: []FieldName{FieldNameDepartmentId, FieldNameJobId, FieldNameCompanySite, FieldNameCity, FieldNameState, FieldNameUnit, FieldNameHierarchy, FieldNameGroup, FieldNameRelationalCustom1, FieldNameRelationalCustom2, FieldNameRelationalCustom3, FieldNameRelationalCustom4, FieldNameRelationalCustom5, FieldNameRelationalCustom6, FieldNameRelationalCustom7, FieldNameRelationalCustom8, FieldNameRelationalCustom9},
 			ValidOperators: []ValidateOperator{
 				{
 					Operators:           []Operator{OperatorEq, OperatorNotEq, OperatorIn, OperatorNotIn},
@@ -404,9 +405,8 @@ var (
 		FieldCountJob,
 		FieldCountCompanySite,
 		FieldCountHierarchy,
-		FieldCountCity,
-		FieldCountState,
 		FieldCountGroup,
+		FieldCountLocation,
 		FieldCountRelationalCustom1,
 		FieldCountRelationalCustom2,
 		FieldCountRelationalCustom3,
