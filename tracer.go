@@ -37,22 +37,24 @@ type TracerConfig struct {
 
 var Tracer = TracerConfig{}
 
-func (t TracerConfig) SetGlobalTracer(c *TracerConfig) error {
+func (t TracerConfig) SetGlobalTracer(c *TracerConfig, providerOptions ...tracesdk.TracerProviderOption) error {
 	exporter, err := jaeger.New(jaeger.WithCollectorEndpoint(
 		jaeger.WithEndpoint(c.ExportEndpoint),
 	))
-
 	if err != nil {
 		return err
 	}
 
-	t.tp = tracesdk.NewTracerProvider(
+	tracerProviderOptions := []tracesdk.TracerProviderOption{
 		tracesdk.WithBatcher(exporter),
 		tracesdk.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
 			semconv.ServiceNameKey.String(c.ServiceName),
 		)),
-	)
+	}
+	tracerProviderOptions = append(tracerProviderOptions, providerOptions...)
+
+	t.tp = tracesdk.NewTracerProvider(tracerProviderOptions...)
 
 	otel.SetTracerProvider(t.tp)
 	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}))
