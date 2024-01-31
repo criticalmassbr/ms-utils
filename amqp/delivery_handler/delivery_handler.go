@@ -28,6 +28,7 @@ type delivery[I any, O any] struct {
 }
 
 type deliveryOptions struct {
+	noInput    bool
 	noResponse bool
 }
 
@@ -44,10 +45,10 @@ const (
 
 var (
 	ErrClientSlugRequired = errors.New("client slug is required")
-	ErrNoResponse         = errors.New("no response")
+	ErrUndefinedField     = errors.New("undefined field")
 )
 
-type NoResponse error
+type Undefined error
 
 func New[I any, O any](d *amqp.Delivery) DeliveryHandler[I, O] {
 	return &delivery[I, O]{
@@ -55,12 +56,24 @@ func New[I any, O any](d *amqp.Delivery) DeliveryHandler[I, O] {
 	}
 }
 
-func NewWithoutResult[I any](d *amqp.Delivery) DeliveryHandler[I, NoResponse] {
-	return &delivery[I, NoResponse]{
+func NewWithoutResult[I any](d *amqp.Delivery) DeliveryHandler[I, Undefined] {
+	return &delivery[I, Undefined]{
 		delivery:     d,
-		handleResult: NoResponse(ErrNoResponse),
+		handleResult: Undefined(ErrUndefinedField),
 		options: deliveryOptions{
 			noResponse: true,
+		},
+	}
+}
+
+func NewWithoutInput[O any](d *amqp.Delivery) DeliveryHandler[Undefined, O] {
+	return &delivery[Undefined, O]{
+		delivery: d,
+		context: DeliveryContext[Undefined]{
+			Body: Undefined(ErrUndefinedField),
+		},
+		options: deliveryOptions{
+			noInput: true,
 		},
 	}
 }
@@ -81,7 +94,7 @@ func (d *delivery[I, O]) ClientSlug() DeliveryHandler[I, O] {
 }
 
 func (d *delivery[I, O]) UnmarshalBody() DeliveryHandler[I, O] {
-	if d.err != nil {
+	if d.err != nil || d.options.noInput {
 		return d
 	}
 
