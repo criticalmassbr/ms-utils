@@ -13,7 +13,7 @@ import (
 
 type VaultMockConfig struct {
 	Enabled  bool   `koanf:"enabled"`
-	JsonFile string `koang:"json_file"`
+	JsonFile string `koanf:"json_file"`
 }
 
 type VaultConfig struct {
